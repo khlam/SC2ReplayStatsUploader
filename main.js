@@ -1,5 +1,13 @@
 // Modules to control application life and create native browser window
 import { app, BrowserWindow, ipcMain } from 'electron'
+import { initConfig, saveToConfig } from './src/config'
+import path from 'path'
+
+const request = require('request')
+const fs = require('fs')
+const randomstring = require('randomstring')
+const base64 = require('base-64')
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 export let mainWindow
@@ -52,12 +60,43 @@ app.on('activate', () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 
-// need to wait for react to finishing building Dom
-ipcMain.on('action', () => {
-  console.log("big nut")
+
+function uploadReplay(config, replay) {
+  let file = path.join(config.replayPath, replay)
+  request.post('https://sc2replaystats.com/upload_replay.php', {
+    formData: {
+      'token': randomstring.generate(32),
+      'upload_method': 'test_upload',
+        'hashkey': base64.decode(config.hash),
+        'timestamp': Math.round(+new Date() / 1000),
+        'Filedata': {
+            value: fs.readFileSync(file),
+            options: {
+                filename: "replay_name"
+            }
+        }
+    }
+  }), (err) => {
+    console.log("Upload err: ",err)
+  }
+}
+
+// --- Initialization Start---
+let configObj
+initConfig().then(value => {
+  configObj = value // Sets config settings
+  console.log(configObj)
+  return configObj
+})
+//  --- Initialization End---
+
+
+ipcMain.on('onModConfig', (e, newConfig) => {
+  configObj = newConfig
+  saveToConfig(newConfig)
 })
 
 // need to wait for react to finishing building Dom
 ipcMain.on('windowDoneLoading', () => {
-  console.log("hello world")
+  mainWindow.webContents.send('modConfig', configObj)
 })

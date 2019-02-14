@@ -1,6 +1,6 @@
 import { combineReducers } from 'redux'
 
-const configData = { "init": "hello world" }
+const configData = { "hash":"", "replayPath":"" }
 const config = (state = configData, action) => {
   switch (action.type) {
     case 'modConfig':

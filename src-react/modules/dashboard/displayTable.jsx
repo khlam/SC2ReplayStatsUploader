@@ -20,7 +20,7 @@ const mapStateToProps = (state) => {
 // mix of dispatch and non dispatch functions
 const mapDispatchToProps = (dispatch) => {
   return {
-    action: (obj) => { dispatch(ipcSendAction('action', obj)) },
+    onModConfig: (configObj) => { dispatch(ipcSendAction('onModConfig', configObj)) },
   }
 }
 
