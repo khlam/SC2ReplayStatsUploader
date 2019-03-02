@@ -4,9 +4,10 @@ import { initConfig, saveToConfig } from './src/config'
 import path from 'path'
 
 const request = require('request')
-const fs = require('fs')
+const fs = require('fs-extra')
 const randomstring = require('randomstring')
 const base64 = require('base-64')
+const chokidar = require('chokidar')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -61,32 +62,78 @@ app.on('activate', () => {
 // code. You can also put them in separate files and require them here.
 
 
-function uploadReplay(config, replay) {
-  let file = path.join(config.replayPath, replay)
-  request.post('https://sc2replaystats.com/upload_replay.php', {
-    formData: {
-      'token': randomstring.generate(32),
-      'upload_method': 'test_upload',
-        'hashkey': base64.decode(config.hash),
-        'timestamp': Math.round(+new Date() / 1000),
-        'Filedata': {
-            value: fs.readFileSync(file),
-            options: {
-                filename: "replay_name"
-            }
-        }
+function uploadReplay(configObj, replay) {
+  return new Promise((resolve, reject) => {
+    request.post('https://sc2replaystats.com/upload_replay.php', {
+      formData: {
+        'token': randomstring.generate(32),
+        'upload_method': 'test_upload',
+          'hashkey': base64.decode(configObj.hash),
+          'timestamp': Math.round(+new Date() / 1000),
+          'Filedata': {
+              value: fs.readFileSync(replay),
+              options: {
+                  filename: path.basename(replay)
+              }
+          }
+      }
+    }), (err) => {
+      console.log("Upload err: ",err)
+      return reject()
     }
-  }), (err) => {
-    console.log("Upload err: ",err)
-  }
+    console.log("success upload")
+    return resolve()
+  })
 }
+
+function makeArchive (configObj) {
+    const archivePath = path.join(configObj.replayPath, 'archive') // Move all uploaded replays to /archive
+    if (!fs.existsSync(archivePath)) {
+      fs.mkdirSync(archivePath)
+    }
+}
+
+function moveReplayToArchive (configObj, replay) {
+  const archivePath = path.join(configObj.replayPath, 'archive') // Move all uploaded replays to /archive
+
+  fs.move(replay, path.join(archivePath, path.basename(replay)), { overwrite: true })
+    .then(() => {
+      console.log(`Successfully uploaded and moved ${path.basename(replay)}`)
+    })
+    .catch(err => {
+      console.error(err)
+    })
+}
+
+function initReplayWatcher (configObj) {
+    const watcher = chokidar.watch(configObj.replayPath, { // Watches wow Addon folder for new addons or deletions
+      ignored: /(^|[/\\])\../,
+      persistent: true,
+      depth: 0
+    })
+    watcher
+      .on('add', function (path) {
+        console.log('New Replay: ', path)
+        uploadReplay(configObj, path).then(val => {
+          moveReplayToArchive(configObj, path)
+        })
+      })
+      .on('error', function (error) {
+        console.log('ERROR: ', error)
+      })
+    return watcher
+  }
 
 // --- Initialization Start---
 let configObj
+let replayWatcher
 initConfig().then(value => {
   configObj = value // Sets config settings
   console.log(configObj)
   return configObj
+}).then(val => {
+  makeArchive(configObj)
+  replayWatcher = initReplayWatcher(configObj)
 })
 //  --- Initialization End---
 
