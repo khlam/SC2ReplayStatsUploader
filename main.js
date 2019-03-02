@@ -8,6 +8,7 @@ const fs = require('fs-extra')
 const randomstring = require('randomstring')
 const base64 = require('base-64')
 const chokidar = require('chokidar')
+const waitOn = require('wait-on');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -15,7 +16,7 @@ export let mainWindow
 
 function createWindow () {
   // Create the browser window.
-  mainWindow = new BrowserWindow({ width: 800, height: 600, /*icon: 'assets/500x500.png',*/ 'web-preferences': { 'direct-write': false, 'subpixel-font-scaling': false } })
+  mainWindow = new BrowserWindow({ width: 500, height: 150, /*icon: 'assets/500x500.png',*/ 'web-preferences': { 'direct-write': false, 'subpixel-font-scaling': false } })
 
   // and load the index.html of the app.
   mainWindow.loadFile('dist/src-react/index.html')
@@ -81,7 +82,6 @@ function uploadReplay(configObj, replay) {
       console.log("Upload err: ",err)
       return reject()
     }
-    console.log("success upload")
     return resolve()
   })
 }
@@ -114,10 +114,23 @@ function initReplayWatcher (configObj) {
     watcher
       .on('add', function (path) {
         console.log('New Replay: ', path)
-        uploadReplay(configObj, path).then(val => {
-          moveReplayToArchive(configObj, path)
-        })
+
+        let opts = {
+          resources: [path],
+          delay: 1000, // initial delay in ms, default 0
+          interval: 100, // poll interval in ms, default 250ms
+          timeout: 30000, // timeout in ms, default Infinity
+          window: 750, // stabilization time in ms, default 750ms
+        };
+
+        waitOn(opts, function (err) {
+          if (err) { return handleError(err); }
+          uploadReplay(configObj, path).then(val => {
+            moveReplayToArchive(configObj, path)
+            })
+          })
       })
+
       .on('error', function (error) {
         console.log('ERROR: ', error)
       })
@@ -129,7 +142,6 @@ let configObj
 let replayWatcher
 initConfig().then(value => {
   configObj = value // Sets config settings
-  console.log(configObj)
   return configObj
 }).then(val => {
   makeArchive(configObj)
