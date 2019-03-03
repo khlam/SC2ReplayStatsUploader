@@ -1,12 +1,12 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { ipcSendAction } from '../../redux/actions/index'
-import { Table } from '../../components/dashboard/Table'
+import { Settings } from '../../components/dashboard/Settings'
 
-class TableContainer extends React.Component {
+class SettingsContainer extends React.Component {
   render () {
     return (
-        <Table {...this.props} />
+        <Settings {...this.props} />
     )
   }
 }
@@ -27,4 +27,4 @@ const mapDispatchToProps = (dispatch) => {
 export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(TableContainer)
+)(SettingsContainer)

@@ -1,12 +1,12 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import DisplayTable from '../modules/dashboard/displayTable'
+import SettingsContainer from '../modules/dashboard/displaySettings'
 
 export class Dashboard extends React.Component {
   render () {
     return (
         <div className="row">
-            <DisplayTable />
+            <SettingsContainer />
         </div>
     )
   }

@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 const {shell} = require('electron')
 const base64 = require('base-64')
-export class Table extends Component {
+export class Settings extends Component {
     constructor (props) {
         super(props)
     }
