@@ -30,7 +30,7 @@ export function initConfig () {
         'hash': '',
         'replayPath': '',
       }
-      return resolve(saveToConfig(config, configObj))
+      return resolve(saveToConfig(configObj))
     }
     try {
       configObj = JSON.parse(fs.readFileSync(config, 'utf8'))
