@@ -41,7 +41,7 @@
     "babel-loader": "^8.0.6",
     "chai": "^4.2.0",
     "css-loader": "^1.0.0",
-    "electron": "^3.1.12",
+    "electron": "^7.2.4",
     "electron-builder": "^20.44.4",
     "electron-packager": "^13.1.1",
     "html-loader": "^0.5.5",
